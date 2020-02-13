@@ -1,4 +1,6 @@
 import pandas as pd
+import operator as op
+import numpy as np
 import math
 
 class Node:
@@ -160,6 +162,29 @@ class MyTree:
         attr = attribute yang ingin dicari gain rationya
         """
         return self.informationGain(data, attr) / self.splitInfo(data,attr)
+
+    def isNan(self, value):
+        return math.isnan(value)
+
+    def mostValue(self, data, attr):
+        valueSet = self.getValuesInAttribute(data, attr)
+        valueMap = dict.fromkeys(valueSet, 0)
+        instances = self.getManyInstances(data)
+
+        for value in data.loc[:,attr]:
+            valueMap[value] += 1
+
+        return max(valueMap.items(), key=op.itemgetter(1))[0]
+
+    def handleMissingValues(self, data):
+        attributes = self.getAttributesInData(data)
+        for attribute in attributes:
+            mostValueInAttribute = self.mostValue(data,attribute)
+            data.loc[data[attribute] == float('NaN'),attribute] = mostValueInAttribute 
+            #tolong dicobain bs ato nggak, kalo gabisa coba ganti jadi
+            #data.loc[data[attribute] == np.nan,attribute] = mostValueInAttribute
+
+
 
     def buildTreeInit(self, trainingSet = None):
         curr_node = self.root
