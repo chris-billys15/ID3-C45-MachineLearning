@@ -247,8 +247,8 @@ class MyTree:
 
 def handleContinuousAttribute(data):
     t = MyTree(_targetAttribute="target")
-    i = 0
     for attr in t.getAttributesInData(data):
+        i = 0
         if (isinstance(data.iloc[0][attr], float)):
             data = data.sort_values(by=[attr])
             target_value = data.iloc[0]["target"]
