@@ -3,6 +3,8 @@ import operator as op
 import numpy as np
 import math
 
+threshold_dict = dict()
+
 class Node:
     def __init__(self,
                 _parent = None, # A Node
@@ -274,19 +276,31 @@ def handleContinuousAttribute(data):
     target = data.columns[-1]
     t = MyTree(_targetAttribute=target)
     for attr in t.getAttributesInData(data):
-        i = 0
         if (isinstance(data.iloc[0][attr], float)):
+            threshold_dict[attr] = max(data[attr])
+            best_threshold = threshold_dict[attr]
+            best_information_gain = -1
             data = data.sort_values(by=[attr])
             target_value = data.iloc[0][target]
+            data_temp = data.copy()
             for index, row in data.iterrows():
                 if (row[target] == target_value):
-                    data.at[index,attr] = i
+                    pass
                 else:
-                    target_value = row[target]
-                    i += 1
-                    data.at[index,attr] = i
+                    threshold_temp = (data.iloc[index-1][attr] + data.iloc[index][attr]) / 2
+                    data_temp.loc[data_temp[attr] < threshold_temp, attr] = 0
+                    data_temp.loc[data_temp[attr] >= threshold_temp, attr] = 1
+                    information_gain_temp = t.informationGain(data_temp, attr)
+                    if (information_gain_temp > best_information_gain):
+                        best_information_gain = information_gain_temp
+                        best_threshold = threshold_temp
+            
+            threshold_dict[attr] = best_threshold
+            print("best_threshold: " + str(best_threshold))
+            data.loc[data[attr] < best_threshold , attr] = 0
+            data.loc[data[attr] >= best_threshold , attr] = 1
 
-    return data           
+    return data       
 
 data = pd.read_csv("tennis.csv")
 # print(data)
