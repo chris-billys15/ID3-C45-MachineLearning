@@ -25,12 +25,15 @@ class Node:
 
     def _printTree(self, space):
         if(self.isLeaf()):
+            print(str(space*' ') + '<' +str(self.valuesTaken[self.parent.attribute]) + '>')
+            print(str( (2+space)*' ') + '(' +str(self.valuesTaken[self.attribute]) + ')')
             return
         else:
-            print(str(space*' ') + str(self.attribute))
+            print(str(space*' ') + '<' +str(self.valuesTaken[self.parent.attribute]) + '>')
+            print(str((2+space)*' ') + str(self.attribute))
             for child in self.children:
                 #print(self.children)
-                child._printTree(space+2)
+                child._printTree(space+4)
 
 class MyTree:
     """A custom decision tree.
@@ -46,15 +49,15 @@ class MyTree:
 
     Attributes
     ----------
-    root = 
+    root =
     targetAttribute = attribute hasil prediksi
     """
-    def __init__(self, 
+    def __init__(self,
                 _root = Node(),
                 _targetAttribute = None):
         self.root = _root
         self.targetAttribute = _targetAttribute
-    
+
     def fit(self, data):
         """Creates decision tree based on training dataset
 
@@ -63,11 +66,11 @@ class MyTree:
         data: dataframe
         training dataset
         """
-        
+
 
     def estimate(self, x):
         """ Estimate label of instance x based on decision tree
-        
+
         Parameters
         ----------
         x = collections.namedtuple
@@ -89,7 +92,7 @@ class MyTree:
                     break
             label = root.label
         return label
-        
+
     def entropyData(self, data):
         """
         data = dataframes yang sudah difilter sesuai kebutuhan
@@ -103,7 +106,7 @@ class MyTree:
 
         entropy = 0
         for value in valueSet:
-            entropy += -valueMap[value]/instances * math.log(valueMap[value]/instances,2) 
+            entropy += -valueMap[value]/instances * math.log(valueMap[value]/instances,2)
         # print(data)
         # print("entropy : ", entropy)
         return entropy
@@ -143,9 +146,9 @@ class MyTree:
         for value in self.getValuesInAttribute(dataset, attr):
             # print(value)
             # print(self.filterDataFrame(dataset, attr, value))
-            gain = gain -(self.getValueInstance(dataset,attr,value)/instances) * (self.entropyData(self.filterDataFrame(dataset, attr, value))) 
-        
-        print("gain" , gain)
+            gain = gain -(self.getValueInstance(dataset,attr,value)/instances) * (self.entropyData(self.filterDataFrame(dataset, attr, value)))
+
+        #print("gain" , gain)
         return gain
 
     def getValueInstance(self, data, attr, targetValue):
@@ -163,19 +166,19 @@ class MyTree:
         atrs = list(data.columns)
         del atrs[-1]
         return atrs
-        
+
     def buildTreeInit(self, trainingSet = None):
         curr_node = self.root
         attr_set = self.getAttributesInData(trainingSet)
         self.buildTree(curr_node, trainingSet, attr_set)
 
     def buildTree(  self,
-                    curr_node = None, # current root 
+                    curr_node = None, # current root
                     trainingSet = None, # dataset training
                     attr_set = None
                     ):
 
-        
+
         # initial dataframe pruning from VALUES/decision taken by parents
         dataset = trainingSet
         # print(curr_node.valuesTaken.items())
@@ -184,19 +187,19 @@ class MyTree:
             if(attr in attr_set):
                 attr_set.remove(attr)
 
-        print(dataset)
-        print("EntropyBigData: ", self.entropyData(dataset))
+        #print(dataset)
+        #print("EntropyBigData: ", self.entropyData(dataset))
         if self.entropyData(dataset) == 0.0 :
             # leaf node!
             # print("LEAF!!!")
             curr_node.attribute = self.targetAttribute
             curr_node.valuesTaken[curr_node.attribute] = self.getValuesInAttribute(dataset, curr_node.attribute)[0]
             curr_node.children = []
-            print("Attribute1: " + curr_node.attribute)
+            #print("Attribute1: " + curr_node.attribute)
             # print("EntropyData: ", self.entropyData(dataset))
             return
-        
-        
+
+
 
         best_node = (None, -999) # best_node -> (attribute name, information gain value)
         # count Information Gain for every attributes:
@@ -207,7 +210,7 @@ class MyTree:
 
         # best attribute = best_node
         curr_node.attribute = best_node[0]
-        print("Attribute2: ", curr_node.attribute)
+        #print("Attribute2: ", curr_node.attribute)
         vals_set = self.getValuesInAttribute(data, best_node[0])
         for value in vals_set:
             temp = dict(curr_node.valuesTaken)
@@ -221,12 +224,34 @@ class MyTree:
             #     print("--", x.attribute)
             self.buildTree(next_node, dataset, set(attr_set))
         #print(curr_node.attribute, next_node.attribute)
-        
-        
+
+
+    def predict(self, values): # (values = {} dict of facts provided)
+        # traverse tree from root
+        curr_node = self.root
+
+        while(not curr_node.isLeaf()):
+            # what is current node attribute about?
+            curr_attr = curr_node.attribute
+            # what is target value from values (fact)?
+            target_val = values[curr_attr]
+            # choose child with appropriate values taken:
+            for child in curr_node.children:
+                #print(child.valuesTaken[curr_attr], target_val)
+                # dataframe data must be converted to string first or else it won't match in comparison!!!
+                if str(child.valuesTaken[curr_attr]) == target_val:
+                    #print("FOUND!")
+                    # found a child that matches with facts, move current node to child:
+                    curr_node = child
+                    break
+
+        # now curr_node is at leaf, return the prediction of target attribute:
+        return curr_node.valuesTaken[self.targetAttribute]
 
     def printTree(self):
-        # print self (root)
-        self.root._printTree(space = 0)
+        print(">" + str(self.root.attribute))
+        for child in self.root.children:
+            child._printTree(space = 2)
 
 data = pd.read_csv("tennis.csv")
 # print(data)
@@ -238,3 +263,4 @@ t = MyTree(_targetAttribute = "play")
 
 t.buildTreeInit(trainingSet = data)
 t.printTree()
+print(t.predict({"outlook" : "rainy", "windy" : "False"}))
