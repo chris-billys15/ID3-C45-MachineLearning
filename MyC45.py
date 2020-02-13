@@ -112,7 +112,7 @@ class MyTree:
             # print(value)
             # print(self.filterDataFrame(dataset, attr, value))
             gain = gain -(self.getValueInstance(data,attr,value)/instances) * (self.entropyData(self.filterDataFrame(data, attr, value)))
-
+            
         #print("gain" , gain)
         return gain
 
@@ -123,6 +123,8 @@ class MyTree:
                 count +=1
         return count
 
+    def getManyInstances(self,data):
+        return len(data)
 
     def getValuesInAttribute(self, data, attr):
         return list(set(data.loc[:, attr]))
@@ -131,6 +133,33 @@ class MyTree:
         atrs = list(data.columns)
         del atrs[-1]
         return atrs
+
+    def splitInfo(self, data, attr):
+        """
+        value dari attribute sudah di diskritkan
+        data = data set yang dipakai
+        attr = attribute yang ingin dicari splitInfonya
+        """
+        valueSet = self.getValuesInAttribute(data, attr)
+        valueMap = dict.fromkeys(valueSet, 0)
+        instances = self.getManyInstances(data)
+
+        for value in data.loc[:,attr]:
+            valueMap[value] += 1
+
+        splitInfoAttr = 0
+        for value in self.getValuesInAttribute(data, attr):
+            splitInfoAttr -= valueMap[value]/instances * math.log(valueMap[value]/instances,2)
+
+        return splitInfoAttr
+
+    def gainRatio(self, data, attr):
+        """
+        gainRatio untuk per attribute
+        data = dataset yang digunakan
+        attr = attribute yang ingin dicari gain rationya
+        """
+        return self.informationGain(data, attr) / self.splitInfo(data,attr)
 
     def buildTreeInit(self, trainingSet = None):
         curr_node = self.root
@@ -163,8 +192,6 @@ class MyTree:
             #print("Attribute1: " + curr_node.attribute)
             # print("EntropyData: ", self.entropyData(dataset))
             return
-
-
 
         best_node = (None, -999) # best_node -> (attribute name, information gain value)
         # count Information Gain for every attributes:
