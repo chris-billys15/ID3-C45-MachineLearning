@@ -246,21 +246,22 @@ class MyTree:
             child._printTree(space = 2)
 
 def handleContinuousAttribute(data):
-    t = MyTree(_targetAttribute="target")
+    target = data.columns[-1]
+    t = MyTree(_targetAttribute=target)
     for attr in t.getAttributesInData(data):
         i = 0
         if (isinstance(data.iloc[0][attr], float)):
             data = data.sort_values(by=[attr])
-            target_value = data.iloc[0]["target"]
+            target_value = data.iloc[0][target]
             for index, row in data.iterrows():
-                if (row["target"] == target_value):
+                if (row[target] == target_value):
                     data.at[index,attr] = i
                 else:
-                    target_value = row["target"]
+                    target_value = row[target]
                     i += 1
                     data.at[index,attr] = i
 
-    return data            
+    return data           
 
 data = pd.read_csv("tennis.csv")
 # print(data)
