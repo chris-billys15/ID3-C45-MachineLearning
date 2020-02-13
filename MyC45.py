@@ -30,14 +30,14 @@ class Node:
     def _printTree(self, space):
         if(self.isLeaf()):
             print(str(space*' ') + '<' +str(self.valuesTaken[self.parent.attribute]) + '>')
-            print(str( (2+space)*' ') + '(' +str(self.valuesTaken[self.attribute]) + ')')
+            print(str( (4+space)*' ') + '(' +str(self.valuesTaken[self.attribute]) + ')')
             return
         else:
             print(str(space*' ') + '<' +str(self.valuesTaken[self.parent.attribute]) + '>')
-            print(str((2+space)*' ') + str(self.attribute))
+            print(str((4+space)*' ') + str(self.attribute))
             for child in self.children:
                 #print(self.children)
-                child._printTree(space+4)
+                child._printTree(space+8)
 
 class MyTree:
     """A custom decision tree.
@@ -116,7 +116,7 @@ class MyTree:
             # print(value)
             # print(self.filterDataFrame(dataset, attr, value))
             gain = gain -(self.getValueInstance(data,attr,value)/instances) * (self.entropyData(self.filterDataFrame(data, attr, value)))
-            
+
         #print("gain" , gain)
         return gain
 
@@ -171,22 +171,17 @@ class MyTree:
     def mostValue(self, data, attr):
         valueSet = self.getValuesInAttribute(data, attr)
         valueMap = dict.fromkeys(valueSet, 0)
-        instances = self.getManyInstances(data)
+        instances = len(data)
 
         for value in data.loc[:,attr]:
             valueMap[value] += 1
 
         return max(valueMap.items(), key=op.itemgetter(1))[0]
 
-    def handleMissingValues(self, data):
-        attributes = self.getAttributesInData(data)
-        for attribute in attributes:
-            mostValueInAttribute = self.mostValue(data,attribute)
-            data.loc[data[attribute] == float('NaN'),attribute] = mostValueInAttribute 
-            #tolong dicobain bs ato nggak, kalo gabisa coba ganti jadi
-            #data.loc[data[attribute] == np.nan,attribute] = mostValueInAttribute
-
-
+    def getAttributesInData(self, data):
+        atrs = list(data.columns)
+        del atrs[-1]
+        return atrs
 
     def buildTreeInit(self, trainingSet = None):
         curr_node = self.root
@@ -203,21 +198,31 @@ class MyTree:
         # initial dataframe pruning from VALUES/decision taken by parents
         dataset = trainingSet
         # print(curr_node.valuesTaken.items())
-        for attr,val in curr_node.valuesTaken.items():
-            dataset = self.filterDataFrame(dataset, attr, val)
-            if(attr in attr_set):
-                attr_set.remove(attr)
 
-        #print(dataset)
         #print("EntropyBigData: ", self.entropyData(dataset))
         if self.entropyData(dataset) == 0.0 :
             # leaf node!
             # print("LEAF!!!")
             curr_node.attribute = self.targetAttribute
-            curr_node.valuesTaken[curr_node.attribute] = self.getValuesInAttribute(dataset, curr_node.attribute)[0]
+            try:
+                curr_node.valuesTaken[curr_node.attribute] = self.getValuesInAttribute(dataset, curr_node.attribute)[0]
+            except:
+                print("List index out of range! BECAUSE NO SUCH KIND OF ")
+                print("Dataset", dataset)
+                print("values taken", curr_node.valuesTaken.items())
+                print("curr_node", curr_node.attribute)
+                print(self.getValuesInAttribute(dataset, curr_node.attribute))
+                return
             curr_node.children = []
             #print("Attribute1: " + curr_node.attribute)
             # print("EntropyData: ", self.entropyData(dataset))
+            return
+        elif not attr_set:
+            # if attr_set is already empty but entropy is not 0: OUTLIER
+            print("Entropy not 0 but already ran out attributes")
+            curr_node.attribute = self.targetAttribute
+            curr_node.valuesTaken[curr_node.attribute] = self.mostValue(data, curr_node.attribute)
+            curr_node.children = []
             return
 
         best_node = (None, -999) # best_node -> (attribute name, information gain value)
@@ -234,6 +239,14 @@ class MyTree:
         for value in vals_set:
             temp = dict(curr_node.valuesTaken)
             temp[best_node[0]] = value
+
+            dataset = self.filterDataFrame(trainingSet, curr_node.attribute, value)
+            if(dataset.empty):
+                # if such combination not available in dataset
+                continue
+            temp_attr_set = attr_set.copy()
+            temp_attr_set.remove(curr_node.attribute)
+
             next_node = curr_node.addChild(_node = Node(_parent = curr_node,
                                     _children = [],
                                     _valuesTaken = temp
@@ -241,7 +254,7 @@ class MyTree:
             # print(curr_node.attribute, " : ")
             # for x in curr_node.children:
             #     print("--", x.attribute)
-            self.buildTree(next_node, dataset, set(attr_set))
+            self.buildTree(next_node, dataset, set(temp_attr_set))
         #print(curr_node.attribute, next_node.attribute)
 
 
@@ -270,7 +283,7 @@ class MyTree:
     def printTree(self):
         print(">" + str(self.root.attribute))
         for child in self.root.children:
-            child._printTree(space = 2)
+            child._printTree(space = 4)
 
 def handleContinuousAttribute(data):
     target = data.columns[-1]
@@ -294,13 +307,13 @@ def handleContinuousAttribute(data):
                     if (information_gain_temp > best_information_gain):
                         best_information_gain = information_gain_temp
                         best_threshold = threshold_temp
-            
+
             threshold_dict[attr] = best_threshold
             print("best_threshold: " + str(best_threshold))
             data.loc[data[attr] < best_threshold , attr] = 0
             data.loc[data[attr] >= best_threshold , attr] = 1
 
-    return data       
+    return data
 
 data = pd.read_csv("tennis.csv")
 # print(data)
