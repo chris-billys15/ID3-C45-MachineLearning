@@ -59,41 +59,6 @@ class MyTree:
         self.root = _root
         self.targetAttribute = _targetAttribute
 
-    def fit(self, data):
-        """Creates decision tree based on training dataset
-
-        Attributes
-        ----------
-        data: dataframe
-        training dataset
-        """
-
-
-    def estimate(self, x):
-        """ Estimate label of instance x based on decision tree
-
-        Parameters
-        ----------
-        x = collections.namedtuple
-        the instance to be tested
-        https://pymotw.com/2/collections/namedtuple.html
-
-        Returns
-        ----------
-        label = string, None
-        """
-        root = self.tree
-        while (label == None):
-            nodes = root.node
-            if (nodes == []):
-                break
-            for node in nodes:
-                if node.rule(x):
-                    root = node
-                    break
-            label = root.label
-        return label
-
     def entropyData(self, data):
         """
         data = dataframes yang sudah difilter sesuai kebutuhan
