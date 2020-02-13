@@ -178,11 +178,14 @@ class MyTree:
 
         return max(valueMap.items(), key=op.itemgetter(1))[0]
 
-    def getAttributesInData(self, data):
-        atrs = list(data.columns)
-        del atrs[-1]
-        return atrs
-
+    def handleMissingValues(self, data):
+        attributes = self.getAttributesInData(data)
+        for attribute in attributes:
+            mostValueInAttribute = self.mostValue(data,attribute)
+            data.loc[data[attribute] == float('NaN'),attribute] = mostValueInAttribute 
+            #tolong dicobain bs ato nggak, kalo gabisa coba ganti jadi
+            #data.loc[data[attribute] == np.nan,attribute] = mostValueInAttribute
+            
     def buildTreeInit(self, trainingSet = None):
         curr_node = self.root
         attr_set = self.getAttributesInData(trainingSet)
