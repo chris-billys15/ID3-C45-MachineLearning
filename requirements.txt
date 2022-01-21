@@ -4,7 +4,7 @@ cycler==0.10.0
 decision-tree-id3==0.1.2
 decorator==4.4.1
 ipykernel==5.1.4
-ipython==7.11.1
+ipython==7.16.3
 ipython-genutils==0.2.0
 jedi==0.16.0
 joblib==0.14.1
